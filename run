@@ -1,0 +1,4 @@
+#!/bin/bash
+gcc -shared sha512.c sha512-crypt.c -o libsha.so
+gcc test.c -L./ -lsha
+LD_LIBRARY_PATH=/root/crypt ./a.out $1 $2 $3
