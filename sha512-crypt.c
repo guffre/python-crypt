@@ -161,7 +161,7 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
       // for (i = 0; i < 64; i++){
       //   printf("%02x ", alt_result[i]);
       // }
-      printf("\n");
+      // printf("\n");
     }
     else {
       printf("binary representation ELSE\n");
@@ -169,7 +169,7 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
       // for (i = 0; i < key_len; i++){
       //   printf("%02x ", key[i]);
       // }
-      printf("\n");
+      // printf("\n");
     }
 
   /* Create intermediate result.  */
@@ -205,22 +205,42 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
   for (cnt = key_len; cnt >= 64; cnt -= 64)
     cp = mempcpy (cp, temp_result, 64);
   memcpy (cp, temp_result, cnt);
-
   /* Start computation of S byte sequence.  */
   sha512_init_ctx (&alt_ctx, nss_alt_ctx);
 
   /* For every character in the password add the entire password.  */
-  for (cnt = 0; cnt < 16 + alt_result[0]; ++cnt)
+  i = 0;
+  printf("alt_result[0]: %02x\n", alt_result[0]);
+  for (cnt = 0; cnt < 16 + alt_result[0]; ++cnt) {
+    i++;
     sha512_process_bytes (salt, salt_len, &alt_ctx, nss_alt_ctx);
+  }
+  printf("Loop times: %d\n", i);
 
   /* Finish the digest.  */
   sha512_finish_ctx (&alt_ctx, nss_alt_ctx, temp_result);
+  printf("SHA512(temp): ");
+  for (i = 0; i < 64; i++)
+    printf("%02x ", temp_result[i]);
+  printf("\n");
 
   /* Create byte sequence S.  */
   cp = s_bytes = alloca (salt_len);
   for (cnt = salt_len; cnt >= 64; cnt -= 64)
     cp = mempcpy (cp, temp_result, 64);
   memcpy (cp, temp_result, cnt);
+
+printf("p_bytes: ");
+for (i = 0; i < key_len; i++) {
+    printf("%02x ", p_bytes[i]);
+}
+printf("\n");
+
+printf("s_bytes: ");
+for (i = 0; i < salt_len; i++) {
+    printf("%02x ", s_bytes[i]);
+}
+printf("\n");
 
   /* Repeatedly run the collected hash value through SHA512 to burn CPU cycles.  */
   for (cnt = 0; cnt < rounds; ++cnt)
@@ -271,6 +291,12 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
       *cp++ = '$';
       --buflen;
     }
+
+  printf("SHA512(final): ");
+  for (i = 0; i < 64; i++)
+    printf("%02x ", alt_result[i]);
+  printf("\n");
+
 
   __b64_from_24bit (&cp, &buflen, alt_result[0], alt_result[21], alt_result[42], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[22], alt_result[43], alt_result[1], 4);
