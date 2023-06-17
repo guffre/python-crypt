@@ -299,6 +299,7 @@ printf("\n");
 
 
   __b64_from_24bit (&cp, &buflen, alt_result[0], alt_result[21], alt_result[42], 4);
+  printf("buffer: %s\n", buffer);
   __b64_from_24bit (&cp, &buflen, alt_result[22], alt_result[43], alt_result[1], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[44], alt_result[2], alt_result[23], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[3], alt_result[24], alt_result[45], 4);
