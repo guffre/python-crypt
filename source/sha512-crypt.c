@@ -108,8 +108,9 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
   struct sha512_ctx ctx;
   struct sha512_ctx alt_ctx;
   int i;
-  printf("key: [%s] [", key); for(i = 0; i < key_len; i++) { printf("%02x ", key[i]); }; printf("]\n");
+  printf("key:  [%s] [", key); for(i = 0; i < key_len; i++) { printf("%02x ", key[i]); }; printf("]\n");
   printf("salt: [%s] [", salt); for(i = 0; i < salt_len; i++) { printf("%02x ", salt[i]); }; printf("]\n");
+  printf("rounds: %d\n", rounds);
 
   /* Prepare for the real work.  */
   sha512_init_ctx (&ctx, nss_ctx);
@@ -135,50 +136,32 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
 
   /* Now get result of this (64 bytes) and add it to the other context.  */
   sha512_finish_ctx (&alt_ctx, nss_alt_ctx, alt_result);
-  printf("SHA512(%s%s%s) == ", key, salt, key);
-  for (i = 0; i < 64; i++)
-    printf("%02x ", alt_result[i]);
-  printf("\n");
+  printf("SHA512(key+salt+key): ", key, salt, key);
+  for (i = 0; i < 64; i++) { printf("%02x ", alt_result[i]); }; printf("\n");
 
   /* Add for any character in the key one byte of the alternate sum.  */
   for (cnt = key_len; cnt > 64; cnt -= 64) {
-    printf("alternate sum!\n");
     sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
   }
   sha512_process_bytes (alt_result, cnt, &ctx, nss_ctx);
-  printf("PROCESS THIS: ");
-  for (i = 0; i < cnt; i++){
-    printf("%02x ", alt_result[i]);
-  }
-  printf("\n");
-
 
   /* Take the binary representation of the length of the key and for every 1 add the alternate sum, for every 0 the key.  */
   for (cnt = key_len; cnt > 0; cnt >>= 1)
     if ((cnt & 1) != 0) {
-      printf("binary representation IF\n");
       sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
-      // for (i = 0; i < 64; i++){
-      //   printf("%02x ", alt_result[i]);
-      // }
-      // printf("\n");
+      // printf("binary representation IF\n");
+      // for (i = 0; i < 64; i++) {printf("%02x ", alt_result[i]);}; printf("\n");
     }
     else {
-      printf("binary representation ELSE\n");
       sha512_process_bytes (key, key_len, &ctx, nss_ctx);
-      // for (i = 0; i < key_len; i++){
-      //   printf("%02x ", key[i]);
-      // }
-      // printf("\n");
+      // printf("binary representation ELSE\n");
+      // for (i = 0; i < key_len; i++) { printf("%02x ", key[i]);}; printf("\n");
     }
 
   /* Create intermediate result.  */
   sha512_finish_ctx (&ctx, nss_ctx, alt_result);
-  printf("SHA512(?) ");
-  for (i = 0; i < 64; i++){
-    printf("%02x ", alt_result[i]);
-  }
-  printf("\n");
+  printf("SHA512(alt_result):  ");
+  for (i = 0; i < 64; i++){ printf("%02x ", alt_result[i]); }; printf("\n");
 
   /* Start computation of P byte sequence.  */
   sha512_init_ctx (&alt_ctx, nss_alt_ctx);
@@ -189,10 +172,8 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
 
   /* Finish the digest.  */
   sha512_finish_ctx (&alt_ctx, nss_alt_ctx, temp_result);
-  printf("SHA512(temp): ");
-  for (i = 0; i < 64; i++)
-    printf("%02x ", temp_result[i]);
-  printf("\n");
+  printf("SHA512(temp_result) [p_bytes]: ");
+  for (i = 0; i < 64; i++) { printf("%02x ", temp_result[i]);}; printf("\n");
 
   /* Create byte sequence P.  */
       free_pbytes = cp = p_bytes = (char *)malloc (key_len);
@@ -209,20 +190,17 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
   sha512_init_ctx (&alt_ctx, nss_alt_ctx);
 
   /* For every character in the password add the entire password.  */
-  i = 0;
-  printf("alt_result[0]: %02x\n", alt_result[0]);
+  /* guffre NOTE: This comment is not correct. It is actually using 
+     the first byte of alt_result as a number, adding 16 to it, and
+     then using that sum as a random value for this loop counter.  */
   for (cnt = 0; cnt < 16 + alt_result[0]; ++cnt) {
-    i++;
     sha512_process_bytes (salt, salt_len, &alt_ctx, nss_alt_ctx);
   }
-  printf("Loop times: %d\n", i);
 
   /* Finish the digest.  */
   sha512_finish_ctx (&alt_ctx, nss_alt_ctx, temp_result);
-  printf("SHA512(temp): ");
-  for (i = 0; i < 64; i++)
-    printf("%02x ", temp_result[i]);
-  printf("\n");
+  printf("SHA512(temp_result) [s_bytes]: ");
+  for (i = 0; i < 64; i++) { printf("%02x ", temp_result[i]);}; printf("\n");
 
   /* Create byte sequence S.  */
   cp = s_bytes = alloca (salt_len);
@@ -230,17 +208,8 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
     cp = mempcpy (cp, temp_result, 64);
   memcpy (cp, temp_result, cnt);
 
-printf("p_bytes: ");
-for (i = 0; i < key_len; i++) {
-    printf("%02x ", p_bytes[i]);
-}
-printf("\n");
-
-printf("s_bytes: ");
-for (i = 0; i < salt_len; i++) {
-    printf("%02x ", s_bytes[i]);
-}
-printf("\n");
+  printf("p_bytes: "); for (i = 0; i < key_len; i++)  { printf("%02x ", (unsigned char)p_bytes[i]);}; printf("\n");
+  printf("s_bytes: "); for (i = 0; i < salt_len; i++) { printf("%02x ", (unsigned char)s_bytes[i]);}; printf("\n");
 
   /* Repeatedly run the collected hash value through SHA512 to burn CPU cycles.  */
   for (cnt = 0; cnt < rounds; ++cnt)
@@ -299,7 +268,6 @@ printf("\n");
 
 
   __b64_from_24bit (&cp, &buflen, alt_result[0], alt_result[21], alt_result[42], 4);
-  printf("buffer: %s\n", buffer);
   __b64_from_24bit (&cp, &buflen, alt_result[22], alt_result[43], alt_result[1], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[44], alt_result[2], alt_result[23], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[3], alt_result[24], alt_result[45], 4);
