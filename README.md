@@ -1,4 +1,4 @@
-# sha512cryp
+# sha512crypt
 The `sha512crypt.py` script will generate sha256-crypt and sha512-crypt hashes. This is using vanilla python, so it will work on Windows as well. Also, I like Python 2 so it works in both Python2 and Python3.
 
 # Why?
