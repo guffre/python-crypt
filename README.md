@@ -1,8 +1,9 @@
 # crypt.py
 The `crypt.py` script will generate md5-crypt, sha256-crypt, and sha512-crypt hashes. This is using vanilla python, so it will work on Windows as well. Also, I like Python 2 so it works in both Python2 and Python3.
+Todo: The only thing I am missing is Blowfish to completely reimplement the whole `crypt` function, I'll work on that. This is complicated since theres no `hashlib.blowfish`. I will probably just implement Blowfish in python and then use that.
 
 # Why?
-Sometimes in discussion, the concept of "salting" a password comes up. In a similar vein, sometimes the question of "why dont linux password hashes look like a md5/sha hash digest?" also rises.
+To learn! Sometimes in discussion, the concept of "salting" a password comes up. In a similar vein, sometimes the question of "why dont linux password hashes look like a md5/sha hash digest?" also rises.
 I knew conceptually how to answer these questions: salting "adds" to a password to help prevent precomputed attacks like rainbow tables, and the linux crypt hashes are actually base64'd.
 
 My simple explanation was:
@@ -25,15 +26,14 @@ In the C portion of the code, I removed most of the codebase since the only thin
 Most of the edits to the source are just `printf` to output "Hey this is what the hash output looks like".
 
 # How To Use
-You can use the code like a library, or since I included a `if __name__ == "__main__"` you can just use it on the commandline:
+You can use the python code like a library, but since I included a `if __name__ == "__main__"` you can also use it on the commandline:
 
     Usage: ./crypt.py <password> <hash> <rounds>
     # Note: rounds is optional, it defaults to 5000 (or hardcoded to 1000 for md5)
     
 ![image](https://github.com/guffre/sha512crypt/assets/21281361/ee18c956-0a3a-429c-8b36-d14b26a32a08)
 
-
-# How To Build (the C program)
+# How To Build (the C program in the sha512crypt folder)
 The C code only supports sha512-crypt. I just needed something to test with since I didn't want to do complete static analysis.
 I included the source here in case anyone else wants to go down that path.
 
