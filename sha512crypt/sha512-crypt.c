@@ -212,60 +212,54 @@ __sha512_crypt_r (const char *key, const char *salt, char *buffer, int buflen)
   printf("s_bytes: "); for (i = 0; i < salt_len; i++) { printf("%02x ", (unsigned char)s_bytes[i]);}; printf("\n");
 
   /* Repeatedly run the collected hash value through SHA512 to burn CPU cycles.  */
-  for (cnt = 0; cnt < rounds; ++cnt)
-    {
-      /* New context.  */
-      sha512_init_ctx (&ctx, nss_ctx);
+  for (cnt = 0; cnt < rounds; ++cnt) {
+    /* New context.  */
+    sha512_init_ctx (&ctx, nss_ctx);
 
-      /* Add key or last result.  */
-      if ((cnt & 1) != 0)
-	sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
-      else
-	sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
+    /* Add key or last result.  */
+    if ((cnt & 1) != 0)
+    	sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
+    else
+	    sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
 
-      /* Add salt for numbers not divisible by 3.  */
-      if (cnt % 3 != 0)
-	sha512_process_bytes (s_bytes, salt_len, &ctx, nss_ctx);
+    /* Add salt for numbers not divisible by 3.  */
+    if (cnt % 3 != 0)
+	    sha512_process_bytes (s_bytes, salt_len, &ctx, nss_ctx);
 
-      /* Add key for numbers not divisible by 7.  */
-      if (cnt % 7 != 0)
-	sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
+    /* Add key for numbers not divisible by 7.  */
+    if (cnt % 7 != 0)
+	    sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
 
-      /* Add key or last result.  */
-      if ((cnt & 1) != 0)
-	sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
-      else
-	sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
+    /* Add key or last result.  */
+    if ((cnt & 1) != 0)
+	    sha512_process_bytes (alt_result, 64, &ctx, nss_ctx);
+    else
+	    sha512_process_bytes (p_bytes, key_len, &ctx, nss_ctx);
 
-      /* Create intermediate result.  */
-      sha512_finish_ctx (&ctx, nss_ctx, alt_result);
-    }
+    /* Create intermediate result.  */
+    sha512_finish_ctx (&ctx, nss_ctx, alt_result);
+  }
 
   /* Now we can construct the result string.  It consists of three parts.  */
   cp = __stpncpy (buffer, sha512_salt_prefix, MAX (0, buflen));
   buflen -= sizeof (sha512_salt_prefix) - 1;
 
-  if (rounds_custom)
-    {
-      int n = snprintf (cp, MAX (0, buflen), "%s%zu$", sha512_rounds_prefix, rounds);
-      cp += n;
-      buflen -= n;
-    }
+  if (rounds_custom) {
+    int n = snprintf (cp, MAX (0, buflen), "%s%zu$", sha512_rounds_prefix, rounds);
+    cp += n;
+    buflen -= n;
+  }
 
   cp = __stpncpy (cp, salt, MIN ((size_t) MAX (0, buflen), salt_len));
   buflen -= MIN ((size_t) MAX (0, buflen), salt_len);
 
-  if (buflen > 0)
-    {
-      *cp++ = '$';
-      --buflen;
-    }
+  if (buflen > 0) {
+    *cp++ = '$';
+    --buflen;
+  }
 
   printf("SHA512(final): ");
-  for (i = 0; i < 64; i++)
-    printf("%02x ", alt_result[i]);
-  printf("\n");
-
+  for (i = 0; i < 64; i++) { printf("%02x ", alt_result[i]);}; printf("\n");
 
   __b64_from_24bit (&cp, &buflen, alt_result[0], alt_result[21], alt_result[42], 4);
   __b64_from_24bit (&cp, &buflen, alt_result[22], alt_result[43], alt_result[1], 4);

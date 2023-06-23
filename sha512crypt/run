@@ -1,3 +1,0 @@
-#!/bin/bash
-gcc sha512.c sha512-crypt.c test.c -o sha512crypt
-./sha512crypt "$@"
