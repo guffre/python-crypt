@@ -160,8 +160,17 @@ class blowfish(object):
             datal ^= self.stream2word(data, databytes, self.current)
             datar ^= self.stream2word(data, databytes, self.current)
             datal, datar = self.encipher(datal, datar)
-        self.p_subkey[i] = datal
-        self.p_subkey[i + 1] = datar
+            self.p_subkey[i] = datal
+            self.p_subkey[i + 1] = datar
+        
+        self.current = 0
+        for i in range(4):
+            for k in range(0,256,2):
+                datal ^= self.stream2word(data, databytes, self.current)
+                datar ^= self.stream2word(data, databytes, self.current)
+                datal, datar = self.encipher(datal, datar)
+                self.s_boxes[i][k] = datal
+                self.s_boxes[i][k+1] = datar
     
     def stream2word(self, data, databytes, current):
         temp = 0
@@ -184,7 +193,7 @@ class blowfish(object):
 
         xl ^= p[0];
         
-       for n in range(1,17):
+        for n in range(1,17):
             if n%2:
                 xr ^= self.F(s,xl) ^ p[n]
             else:
