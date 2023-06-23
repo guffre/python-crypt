@@ -50,6 +50,7 @@
 #define BCRYPT_MAXSALT 16	/* Precomputation is just so nice */
 #define BCRYPT_WORDS 6		/* Ciphertext words */
 #define BCRYPT_MINLOGROUNDS 4	/* we have log2(rounds) in salt */
+#define BCRYPT_MAXLOGROUNDS 31
 
 #define	BCRYPT_SALTSPACE	(7 + (BCRYPT_MAXSALT * 4 + 2) / 3 + 1)
 #define	BCRYPT_HASHSPACE	61
@@ -86,10 +87,10 @@ bcrypt_initsalt(int log_rounds, uint8_t *salt, size_t saltbuflen)
 
 	arc4random_buf(csalt, sizeof(csalt));
 
-	if (log_rounds < 4)
-		log_rounds = 4;
-	else if (log_rounds > 31)
-		log_rounds = 31;
+	if (log_rounds < BCRYPT_MINLOGROUNDS)
+		log_rounds = BCRYPT_MINLOGROUNDS;
+	else if (log_rounds > BCRYPT_MAXLOGROUNDS)
+		log_rounds = BCRYPT_MAXLOGROUNDS;
 
 	snprintf(salt, saltbuflen, "$2b$%2.2u$", log_rounds);
 	encode_base64(salt + 7, csalt, sizeof(csalt));
@@ -152,7 +153,7 @@ bcrypt_hashpass(const char *key, const char *salt, char *encrypted,
 	    !isdigit((unsigned char)salt[1]) || salt[2] != '$')
 		goto inval;
 	logr = (salt[1] - '0') + ((salt[0] - '0') * 10);
-	if (logr < BCRYPT_MINLOGROUNDS || logr > 31)
+	if (logr < BCRYPT_MINLOGROUNDS || logr > BCRYPT_MAXLOGROUNDS)
 		goto inval;
 	/* Computer power doesn't increase linearly, 2^x should be fine */
 	rounds = 1U << logr;
@@ -369,4 +370,67 @@ bcrypt(const char *pass, const char *salt)
 		return NULL;
 
 	return gencrypted;
+}
+
+
+
+void
+report(u_int32_t data[], u_int16_t len)
+{
+	u_int16_t i;
+	for (i = 0; i < len; i += 2)
+		printf("Block %0hd: %08lx %08lx.\n",
+		    i / 2, data[i], data[i + 1]);
+}
+
+
+int
+main(int argc, char *argv[])
+{
+
+	blf_ctx c;
+	char    key[] = "AAAAA";
+	char    key2[] = "abcdefghijklmnopqrstuvwxyz";
+
+	u_int32_t data[10];
+	u_int32_t data2[] =
+	{0x424c4f57l, 0x46495348l};
+
+	u_int16_t i;
+
+	/* First test */
+	for (i = 0; i < 10; i++)
+		data[i] = i;
+
+	blf_key(&c, (u_int8_t *) key, 5);
+	blf_enc(&c, data, 5);
+	blf_dec(&c, data, 1);
+	blf_dec(&c, data + 2, 4);
+	printf("Should read as 0 - 9.\n");
+	report(data, 10);
+
+	/* Second test */
+	blf_key(&c, (u_int8_t *) key2, strlen(key2));
+	blf_enc(&c, data2, 1);
+	printf("\nShould read as: 0x324ed0fe 0xf413a203.\n");
+	report(data2, 2);
+	blf_dec(&c, data2, 1);
+	report(data2, 2);
+
+	printf("argv[1]: %s\n", argv[1]);
+	printf("argv[2]: %s\n", argv[2]);
+	char *bcrypt_salt;
+	
+	if (argv[2][0] == '$') {
+		// Assume its a provided salt
+		bcrypt_salt = argv[2];
+	}
+	else {
+		bcrypt_salt = bcrypt_gensalt(atoi(argv[2]));
+	}
+
+	const char *bcrypt_key  = argv[1];
+
+	printf("salt: %s\n", bcrypt_salt);
+	printf("hash: %s\n", bcrypt(bcrypt_key, bcrypt_salt));
 }
