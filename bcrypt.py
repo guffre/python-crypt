@@ -1,14 +1,23 @@
 import blowfish
 import base64
 import string
+import os
 
 class bcrypt(object):
     def __init__(self, key, salt):
         self.BCRYPT_MAXSALT = 16
         self.BCRYPT_WORDS = 6
 
+    def gensalt(self, rounds):
+        csalt = os.urandom(self.BCRYPT_MAXSALT)
+        rounds = min(max(4,rounds),31) # rounds must be between 4-31
+        encoded = self.encode_base64(csalt).decode()
+        salt = "$2b${:02d}${}".format(rounds, encoded)
+        return salt
+
     def hashpass(self, key, salt):
         ciphertext = bytearray(b"OrpheanBeholderScryDoubt")
+        key = bytearray(key)
         if (salt[0] != '$'):
             return None
         if (salt[1] != "2"):
@@ -79,7 +88,7 @@ class bcrypt(object):
             cdata[i] = cdata[i] >> 8
             ciphertext[4 * i + 0] = cdata[i] & 0xff
 
-        encrypted = "$2{}$0{}$".format(minor, logr)
+        encrypted = "$2{}${:02d}$".format(minor, logr)
         encrypted += (self.encode_base64(csalt[:self.BCRYPT_MAXSALT])).decode()
         encrypted += (self.encode_base64(ciphertext[:4 * self.BCRYPT_WORDS - 1])).decode()
         print(encrypted)
