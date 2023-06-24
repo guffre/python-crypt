@@ -151,7 +151,7 @@ class blowfish(object):
         datar = 0
         self.current = 0
         for i in range(BLF_N+2):
-            temp = self.stream2word(data, databytes, self.current)
+            temp = self.stream2word(key, keybytes, self.current)
             self.p_subkey[i] = self.p_subkey[i]^temp
         
         self.current = 0
@@ -162,7 +162,6 @@ class blowfish(object):
             self.p_subkey[i] = datal
             self.p_subkey[i + 1] = datar
         
-        self.current = 0
         for i in range(4):
             for k in range(0,256,2):
                 datal ^= self.stream2word(data, databytes, self.current)
@@ -207,8 +206,10 @@ class blowfish(object):
 
     def blf_enc(self, data, blocks):
         """data: Must be an even-length, mutable list of 32-bit numbers"""
-        for i in range(0,blocks,2):
+        i = 0
+        for _ in range(blocks):
             data[i],data[i+1] = self.encipher(data[i], data[i+1])
+            i += 2
 
     def blf_key(self, k, len):
         # Reset s_boxes and p_subkey
