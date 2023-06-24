@@ -2,6 +2,9 @@
 The `crypt.py` script will generate md5-crypt, sha256-crypt, and sha512-crypt hashes. This is using vanilla python, so it will work on Windows as well. Also, I like Python 2 so it works in both Python2 and Python3.
 Todo: The only thing I am missing is Blowfish to completely reimplement the whole `crypt` function, I'll work on that. This is complicated since theres no `hashlib.blowfish`. I will probably just implement Blowfish in python and then use that.
 
+# bcrypt.py and blowfish.py
+These are a native Python implementation of blowfish and bcrypt. Obviously blowfish will run slower in pure Python than in C, but I wanted to do it. Currently only supports the "$2b$" hash-type, but I might work on implementing "$2a$" as well.
+
 # Why?
 To learn! Sometimes in discussion, the concept of "salting" a password comes up. In a similar vein, sometimes the question of "why dont linux password hashes look like a md5/sha hash digest?" also rises.
 I knew conceptually how to answer these questions: salting "adds" to a password to help prevent precomputed attacks like rainbow tables, and the linux crypt hashes are actually base64'd.
