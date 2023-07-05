@@ -1,6 +1,6 @@
 # crypt.py
-The `crypt.py` script will generate md5-crypt, sha256-crypt, and sha512-crypt hashes. This is using vanilla python, so it will work on Windows as well. Also, I like Python 2 so it works in both Python2 and Python3.
-Todo: The only thing I am missing is Blowfish to completely reimplement the whole `crypt` function, I'll work on that. This is complicated since theres no `hashlib.blowfish`. I will probably just implement Blowfish in python and then use that.
+The `crypt.py` script will generate bcrypt, md5-crypt, sha256-crypt, sha512-crypt hashes. This is using vanilla python, so it will work on Windows as well. Also, I like Python 2 so it works in both Python2 and Python3.
+Todo: Thinking about adding yescrypt, since my Debian boxes use that by default.
 
 # bcrypt.py and blowfish.py
 These are a native Python implementation of blowfish and bcrypt. Obviously blowfish will run slower in pure Python than in C, but I wanted to do it. Currently only supports the "$2b$" hash-type, but I might work on implementing "$2a$" as well.
@@ -40,7 +40,8 @@ You can use the python code like a library, but since I included a `if __name__ 
 The C code only supports sha512-crypt. I just needed something to test with since I didn't want to do complete static analysis.
 I included the source here in case anyone else wants to go down that path.
 
-    ./run <password> <salt> <rounds>
-    ./run password saltsalt 0
+    make
+    ./sha512crypt <password> <salt> <rounds>
+    ./sha512crypt password saltines 0 
 
-This lets you do 0 rounds, I wanted this for testing purposes. You can also have any length salt.
+This does let you do 0 rounds, I wanted this for testing purposes. You can also have any length salt.
