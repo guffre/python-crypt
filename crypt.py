@@ -152,7 +152,13 @@ def crypt_sha(key, salt, rounds=5000, hash=hashlib.sha512):
     encoded = crypt_base64(alt_result).decode()
 
     # Make some nice output
-    hashnumber = 5 if hash == hashlib.sha256 else 6
+    if hash == hashlib.sha256:
+        hashnumber = 5
+    elif hash == hashlib.sha512:
+        hashnumber = 6
+    else:
+        print("[!] Unknown hash used in crypt_sha, noting as hashnumber = 'X'")
+        hashnumber = 'X'
     if rounds == 5000:
         formatted = "${}${}${}".format(hashnumber,salt.decode(),encoded)
     else:
@@ -160,10 +166,20 @@ def crypt_sha(key, salt, rounds=5000, hash=hashlib.sha512):
         formatted = "${}${}${}${}".format(hashnumber,rounds,salt.decode(),encoded)
     return (alt_result,formatted)
 
+def crypt_sha256(key, salt, rounds=5000):
+    hash=hashlib.sha256
+    return crypt_sha(key, salt, rounds, hash)
+
+def crypt_sha512(key, salt, rounds=5000):
+    hash=hashlib.sha512
+    return crypt_sha(key, salt, rounds, hash)
+
 if __name__ == '__main__':
     import binascii
     import sys
-    #try:
+    if len(sys.argv) < 3:
+        print("Usage: {} <password> <salt> <rounds (optional)>".format(sys.argv[0]))
+        exit(1)
     key  = sys.argv[1].encode()
     salt = sys.argv[2].encode()
     if len(sys.argv) == 4:
@@ -171,13 +187,11 @@ if __name__ == '__main__':
     else:
         rounds = 5000
     digest,hash = crypt_md5(key, salt)
-    print("md5-crypt digest: {}".format(binascii.hexlify(digest)))
-    print("md5-crypt hash: {}".format(hash))
-    digest,hash = crypt_sha(key, salt, rounds, hashlib.sha256)
+    print("md5-crypt digest:    {}".format(binascii.hexlify(digest)))
+    print("md5-crypt hash:      {}".format(hash))
+    digest,hash = crypt_sha256(key, salt, rounds)
     print("sha256-crypt digest: {}".format(binascii.hexlify(digest)))
-    print("sha256-crypt hash: {}".format(hash))
-    digest,hash = crypt_sha(key, salt, rounds)
+    print("sha256-crypt hash:   {}".format(hash))
+    digest,hash = crypt_sha512(key, salt, rounds)
     print("sha512-crypt digest: {}".format(binascii.hexlify(digest)))
-    print("sha512-crypt hash: {}".format(hash))
-    #except:
-    #    print("Usage: ./{} <password> <hash> <rounds>".format(sys.argv[0]))
+    print("sha512-crypt hash:   {}".format(hash))
