@@ -4,7 +4,7 @@ import string
 import os
 
 class bcrypt(object):
-    def __init__(self, key, salt):
+    def __init__(self):
         self.BCRYPT_MAXSALT = 16
         self.BCRYPT_WORDS = 6
 
@@ -32,7 +32,7 @@ class bcrypt(object):
             key_len += 1 # include the NULL
             key += b"\0"
         else:
-             return 3
+             return None #3
         minor = salt[2]
         if (salt[3] != '$'):
             return None
@@ -59,7 +59,7 @@ class bcrypt(object):
             return None
         salt_len = self.BCRYPT_MAXSALT
         csalt = csalt[:self.BCRYPT_MAXSALT]
-        print(csalt, len(csalt))
+        #print(csalt, len(csalt))
         
 
         # Setting up S-Boxes and Subkeys
@@ -91,8 +91,7 @@ class bcrypt(object):
         encrypted = "$2{}${:02d}$".format(minor, logr)
         encrypted += (self.encode_base64(csalt[:self.BCRYPT_MAXSALT])).decode()
         encrypted += (self.encode_base64(ciphertext[:4 * self.BCRYPT_WORDS - 1])).decode()
-        print(encrypted)
-        return 0
+        return encrypted
 
     @staticmethod
     def decode_base64(data):
@@ -112,7 +111,7 @@ class bcrypt(object):
         ret = ret.translate(trans.maketrans(normal_base, bcrypt_base)).replace(b"=",b"")
         return ret
 
-if __name__ == "__main__":
+def old_blowfish_test():
     b = blowfish.blowfish()
 
     key = bytearray(b"AAAAA")
@@ -120,7 +119,6 @@ if __name__ == "__main__":
 
     data = [i for i in range(10)]
     data2 = [0x424c4f57, 0x46495348]
-
     # First test
     #blf_key(&c, (u_int8_t *) key, 5);
     #blf_enc(&c, data, 5);
@@ -134,6 +132,28 @@ if __name__ == "__main__":
     b.blf_enc(data2, 1)
     print("\nShould read as: 0x324ed0fe 0xf413a203.\n");
     print([hex(n) for n in data2])
-    
-    b = bcrypt(1,2)
+
+    b = bcrypt()
     b.hashpass(b"password","$2b$04$22pb8uzFKQF5LlzGqDcHhu")
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description='Process password, salt, and rounds.')
+
+    parser.add_argument('-p', '--password', type=str, help='Password to be hashed')
+    parser.add_argument('-s', '--salt',     type=str, help='Salt for password hashing')
+    parser.add_argument('-r', '--rounds',   type=int, choices=range(4, 32), help='Number of rounds for hashing')
+
+    args = parser.parse_args()
+    b = bcrypt()
+ 
+    if args.password and not args.salt:
+        if args.rounds is None:
+            parser.error('--rounds is required when --password is provided without --salt')
+        else:
+            args.salt = b.gensalt(args.rounds)
+    
+    hash = b.hashpass(args.password.encode(), args.salt)
+    print("Using salt:  {}".format(args.salt))
+    print("bcrypt hash: {}".format(hash))
